@@ -1,14 +1,27 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\BorrowController;
 use Illuminate\Support\Facades\Route;
-
-
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Book Management (Admin/Librarian)
+    Route::middleware('role:admin|librarian')->group(function () {
+        Route::post('/books', [BookController::class, 'store']);
+        Route::put('/books/{id}', [BookController::class, 'update']);
+        Route::delete('/books/{id}', [BookController::class, 'destroy']);
+    });
+
+    // Access Books
+    Route::get('/books', [BookController::class, 'index']); // Available to all
+
+    // Borrow Management (Admin/Member)
+    Route::middleware('role:admin|member')->group(function () {
+        Route::post('/borrow', [BorrowController::class, 'borrow']);
+        Route::patch('/borrow/{id}/return', [BorrowController::class, 'returnBook']);
+    });
+});
