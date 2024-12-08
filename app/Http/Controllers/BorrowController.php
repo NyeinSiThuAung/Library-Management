@@ -23,13 +23,16 @@ class BorrowController extends Controller
 
         $book->update(['is_available' => false]);
 
-        Borrow::create([
+        $borrow = Borrow::create([
             'user_id' => auth()->id(),
             'book_id' => $book->id,
             'borrowed_at' => now(),
         ]);
 
-        return response()->json(['message' => 'Book borrowed successfully'], 200);
+        return response()->json([
+            'borrow_id' => $borrow->id,
+            'message' => 'Book borrowed successfully'
+        ], 200);
     }
 
     /**
@@ -40,7 +43,8 @@ class BorrowController extends Controller
      */
     public function returnBook($id)
     {
-        $borrow = Borrow::where('id', $id)->whereNull('returned_at')->first();
+        // Find the borrow record with the given id that belongs to the authenticated user and has not been returned yet.
+        $borrow = Borrow::where('id', $id)->where('user_id', auth()->id())->whereNull('returned_at')->first();
 
         if (!$borrow) return response()->json(['message'=> 'Borrowed book not found'], 404);
 
